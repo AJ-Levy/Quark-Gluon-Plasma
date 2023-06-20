@@ -6,7 +6,7 @@ import pandas as pd
 from scipy.optimize import curve_fit
 
 # choose R (reasonable) or G (gubser)
-LAMBDA = "G"
+LAMBDA = "R"
 
 FILENAME = "out/output_" + LAMBDA + "c.csv"
 
