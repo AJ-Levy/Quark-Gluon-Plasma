@@ -264,7 +264,7 @@ int main () {
 	make2dprng y("data/Pb0010mcprody.dat");
 
 	int i, j, k, goodreturn, goodreturn2;
-	const int jmax = 5000000, jprint = jmax/10, tnd=2;
+	const int jmax = 10000000, jprint = jmax/10, tnd=2;
 	double tempx, tempangle, temppT, maxL = 10., t0 = 0.6, tmax = 13., tTf = 0.16, tEpmax = 10000., tTmult = 0.759835686, tm = mb, x00[2] = {0.,0.};
 	double tlam, tempxi[2], temppi[2], temppi2[2];
 

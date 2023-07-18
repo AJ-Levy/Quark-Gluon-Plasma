@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 import time
 import subprocess
 import pandas as pd
+import random
 from scipy.optimize import curve_fit
 
 # choose R (reasonable) or G (gubser)
-LAMBDA = "R"
+LAMBDA = "G"
 
-FILENAME = "out/output_" + LAMBDA + "c.csv"
+FILENAME = "out/output_" + LAMBDA + "b.csv"
 
 # length of csv file (N) obtained using bash command
 N = int(subprocess.check_output("wc -l " + FILENAME, shell = True).split()[0])
@@ -110,7 +111,6 @@ print("+--------------------------------+")
 print(f"| Closest to π: {nearestBin:.6f} rad     |")
 
 
-
 # Uncertainty calculation (using Poisson approximation ~ sqrt(N) for now)
 unc_countsData = np.zeros(len(countsData))
 for i in range(0,len(countsData)):
@@ -129,9 +129,62 @@ plt.ylabel("Number of Pairs (counts)")
 plt.xlim(0,2*np.pi)
 plt.xticks([0, np.pi/2, np.pi, (3/2)*np.pi, 2*np.pi], ['0', 'π/2', 'π', '3π/2', '2π'])
 
+# Alternative Uncertainty Calculations
+
+# split dataframe into 100 equal parts
+numDivisons = 10
+dfArray = np.array_split(finalData, numDivisons)
+
+# making each df into a histogram
+countsArray = []
+edgesArray = []
+centresArray = []
+
+# testing
+x = random.randint(0,9)
+
+for i in range(0, len(dfArray)):
+    c, e = np.histogram(dfArray[i]['deltaAngle'], bins=nBins, range = (0,2*np.pi))
+    countsArray.append(c)
+    edgesArray.append(e)
+    # create an array at centre of each bin
+    centre = (edgesArray[i][1:] + edgesArray[i][:-1])/2
+    centresArray.append(centre)
+
+meanArray = []
+uncertaintyArray = []
+# calculating mean value for each bin
+lenArray = len(countsArray)
+for j in range(0, nBins):
+    sumCounts = 0
+    for k in range(0, lenArray):
+        sumCounts += countsArray[k][j]
+    m = sumCounts/lenArray
+    meanArray.append(m)
+
+# calculating uncertainty for each bin
+for j in range(0, nBins):
+    varCounts = 0
+    for k in range(0, lenArray):
+        varCounts += (countsArray[k][j] - meanArray[j])**2
+    var = varCounts/(lenArray-1)
+    std = np.sqrt(var)
+    uncertaintyArray.append(std/np.sqrt(lenArray))
+
+plt.figure(2) 
+plt.title(f"Plot when dataset is split into {numDivisons} subsets")
+plt.scatter(centresArray[x], countsArray[x], marker=".", color = "green", label = f"Example of Subset #{x}")
+plt.errorbar(centresArray[x], meanArray, yerr = uncertaintyArray, ecolor = "red", color = "k", fmt = ".", label = "Mean Values")
+plt.xlabel("Angular Separation (rad)")
+plt.ylabel("Number of Pairs (counts)")
+plt.xlim(0,2*np.pi)
+plt.xticks([0, np.pi/2, np.pi, (3/2)*np.pi, 2*np.pi], ['0', 'π/2', 'π', '3π/2', '2π'])
+plt.legend()
+
 # fitting procedure for gaussian to find mean and fwhm
 # need fitting dataset that doesn't include 0 count bins
-THRESHOLD = int(max(countsData)*0.35)
+MAXIMUM_COUNTS = max(countsData)
+THRESHOLD = int(MAXIMUM_COUNTS*0.35)
 fit_countsData = []
 fit_centres = []
 for i in range(0,len(countsData)):
@@ -139,7 +192,11 @@ for i in range(0,len(countsData)):
         fit_countsData.append(countsData[i])
         fit_centres.append(centres[i])
 
+print(f"| Maximum: {MAXIMUM_COUNTS:5,d} counts          |")
 print(f"| Threshold: {THRESHOLD:5,d} counts        |")
+
+
+plt.figure(0)
 
 # gaussian function 
 def g(x, A, mu, sigma):
